@@ -1,0 +1,27 @@
+{
+  "downloaded": "2026-11-18",
+  "source": "https://handbook.fca.org.uk (View Sourcebook as PDF)",
+  "books": {
+    "DISP": {
+      "file": "DISP.pdf",
+      "sha256": "b7420bcb5b9f155d8764541ac8f9d5c1dec1b606d32bf5b812affeb0743577be",
+      "pages": 285,
+      "last_updated": "September 2026",
+      "provisions": 700
+    },
+    "BCOBS": {
+      "file": "BCOBS.pdf",
+      "sha256": "a3e55f6c5c6b7a360a09e8cf55937c8ad7786be165a149828a3af991f8811c8f",
+      "pages": 147,
+      "last_updated": "June 2026",
+      "provisions": 242
+    },
+    "PRIN": {
+      "file": "PRIN.pdf",
+      "sha256": "2356b8c652bcdd70db8bf761d2222baa7d1da84b973809e578c60dc6ca617485",
+      "pages": 86,
+      "last_updated": "June 2026",
+      "provisions": 234
+    }
+  }
+}
