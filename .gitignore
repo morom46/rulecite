@@ -1,0 +1,11 @@
+# The Handbook PDFs and everything made from them stay on your machine:
+# reproducing Handbook text needs the FCA's permission (see data/README.md).
+data/raw/*.pdf
+data/processed/
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/

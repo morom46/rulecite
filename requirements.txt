@@ -1,0 +1,3 @@
+# Exact versions, so every machine produces the same results.
+pymupdf==2.1
+pytest==9.2.0
