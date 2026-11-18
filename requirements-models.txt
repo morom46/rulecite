@@ -1,0 +1,5 @@
+# The embedding model and the cross-encoder, run on the CPU.
+# make setup installs PyTorch first, from the CPU-only index, so that pip does
+# not fetch the much larger build for NVIDIA graphics cards:
+#   pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers==6.3.0

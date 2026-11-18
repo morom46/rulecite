@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Answers questions about FCA Handbook rules by quoting the rule, with its citation, and is measured on a hand-checked test set."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pymupdf>=2.1"]
+dependencies = ["pymupdf>=2.1", "numpy>=2", "snowballstemmer>=3"]
+
+[project.optional-dependencies]
+models = ["sentence-transformers>=6"]
 
 [build-system]
 requires = ["setuptools>=68"]
