@@ -1,11 +1,13 @@
 PY := .venv/bin/python
 
-.PHONY: help setup ingest test clean
+.PHONY: help setup ingest test testset review clean
 
 help:
 	@echo "make setup    create .venv and install the pinned packages"
 	@echo "make ingest   parse data/raw/*.pdf into data/processed/rules.jsonl"
 	@echo "make test     run all tests (real-data tests run only after make ingest)"
+	@echo "make testset  check testset/questions.jsonl and print its counts"
+	@echo "make review   check the test questions by hand, one at a time"
 	@echo "make clean    remove data/processed and caches"
 
 setup:
@@ -21,6 +23,12 @@ ingest: data/processed/rules.jsonl
 
 test:
 	$(PY) -m pytest
+
+testset:
+	$(PY) -m rulecite.testset
+
+review: data/processed/rules.jsonl
+	$(PY) -m rulecite.review
 
 clean:
 	rm -rf data/processed .pytest_cache
