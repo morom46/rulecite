@@ -64,3 +64,18 @@ def test_references_resolve(rules):
     resolved = sum(x in rules for x in inside)
     # The rest point to deleted provisions or to annexes printed under other IDs.
     assert resolved / len(inside) > 0.95
+
+
+def test_testset_matches_the_rules(rules):
+    """Every gold ID exists and every key fact is in the gold text (see rulecite/testset.py)."""
+    from rulecite.testset import check_against_rules, load_questions
+
+    questions = load_questions(PROCESSED.parents[1] / "testset" / "questions.jsonl")
+    assert check_against_rules(questions, rules) == []
+
+
+def test_unanswerable_topics_are_absent(rules):
+    """Spot checks that the out-of-scope topics really are missing from the three books."""
+    text = " ".join(r.text.lower() for r in rules.values())
+    for phrase in ("payday", "loan-to-income", "liquidity coverage", "national crime agency"):
+        assert phrase not in text
