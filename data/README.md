@@ -10,7 +10,9 @@ rulecite works on three sourcebooks of the FCA Handbook:
 
 The PDFs are **not** in this repository. Copying Handbook text needs the
 FCA's permission, so each person downloads their own copy. Everything made
-from them (`data/processed/`) also stays on your machine.
+from them (`data/processed/`) also stays on your machine. The one exception is
+the test set, which stores rule IDs and short key phrases of a few words each
+(see [docs/testset.md](../docs/testset.md)), never the rule text.
 
 ## Download
 
