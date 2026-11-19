@@ -94,3 +94,26 @@ def test_keyword_search_finds_most_answers(rules):
     ranks = [gold_rank([ids[i] for i in res.bm25], q.gold, q.category)
              for q, res in zip(questions, searcher.run([q.question for q in questions]))]
     assert recall_at(ranks, 20) >= 0.8
+
+
+def test_quotes_can_hold_the_key_facts(rules):
+    """For nearly every answerable question, one quoted piece per gold provision holds every
+    key fact, so a perfect choice of pieces could answer it (see rulecite/answer.py)."""
+    from rulecite.answer import quote_around, units
+    from rulecite.testset import contains, load_questions
+
+    def quotes(rule):
+        pieces = units(rule.text) or [rule.text]
+        return [quote_around(pieces, i) for i in range(len(pieces))]
+
+    questions = [q for q in load_questions(PROCESSED.parents[1] / "testset" / "questions.jsonl")
+                 if q.gold]
+    reachable = 0
+    for q in questions:
+        if q.category == "multi":
+            reachable += all(any(contains(p, f) for g in q.gold for p in quotes(rules[g]))
+                             for f in q.key_facts)
+        else:
+            reachable += any(all(contains(p, f) for f in q.key_facts)
+                             for p in quotes(rules[q.gold[0]]))
+    assert reachable >= len(questions) - 2

@@ -1,0 +1,10 @@
+{
+  "threshold": 0.033,
+  "chosen_on": "dev",
+  "max_quotes": 2,
+  "best_dev_accuracy": 0.7,
+  "tied_range": [
+    -2.23775,
+    0.57975
+  ]
+}
