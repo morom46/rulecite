@@ -1,0 +1,9 @@
+{
+  "rerank_depth": 50,
+  "chosen_on": "dev",
+  "dev_recall_at_5": {
+    "rerank@10": 0.814,
+    "rerank@20": 0.8372,
+    "rerank@50": 0.8372
+  }
+}

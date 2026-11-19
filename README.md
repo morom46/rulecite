@@ -21,7 +21,7 @@ Everything runs on a laptop CPU, with no paid API and no account.
 |---|---|---|
 | 1 | Parse the three sourcebooks into one record per provision | done |
 | 2 | A test set of 150 questions, each with the rules that answer it and the facts a right answer must contain | done |
-| 3 | Search: keyword, meaning-based, both combined, and re-ranking | planned |
+| 3 | Search: keyword, meaning-based, both combined, and re-ranking | done |
 | 4 | Answers that quote the rule with its citation, and refuse when unsure | planned |
 | 5 | Comparison with a small local language model that writes its own answers | planned |
 | 6 | Failure analysis and a demo page | planned |
@@ -62,6 +62,36 @@ rules in other parts of the Handbook (mortgages, insurance, consumer credit);
 seven of them are hard negatives, where a provision in these three books uses
 the same words without answering the question.
 
+## Milestone 3: search
+
+Four ways of finding the provision that answers a question, all on the CPU:
+keyword search (BM25), meaning search with a small embedding model
+(`bge-small-en-v1.5`), the two combined (reciprocal rank fusion), and a
+cross-encoder (`ms-marco-MiniLM-L6-v2`) that re-ranks the top 50 combined
+results. The depth of 50 was chosen on the dev questions; the test questions
+were run once. See [docs/search.md](docs/search.md).
+
+Results on the 87 answerable test questions (percentages):
+
+| method | right rule first | in top 5 | in top 20 | 95% interval, top 5 |
+|---|---|---|---|---|
+| keyword (BM25) | 41 | 76 | 91 | 67–84 |
+| meaning (dense) | 52 | 80 | 90 | 71–89 |
+| both (hybrid) | 49 | 80 | 95 | 72–89 |
+| **re-ranked** | **59** | **87** | **97** | 80–94 |
+
+Re-ranking finds the right rule in the top 5 for 14 test questions that
+keyword search misses, and misses 4 that it finds (exact McNemar test,
+p = 0.03). Its gains over the combined list and of the combined list over
+either part are in the same direction but too small to tell from chance on
+87 questions (p = 0.15 to 1.0). The largest gains are on questions that need
+two provisions (55% to 73% in the top 5) and on whether a rule applies (75%
+to 92%).
+
+The re-ranker's score also separates the two kinds of question: the median
+score of its first result is 6.0 for answerable test questions and −1.9 for
+unanswerable ones. Milestone 4 uses that to decide when to refuse.
+
 ## Quick start
 
 Needs Python 3.11 or newer.
@@ -78,15 +108,24 @@ and run:
 make ingest    # about two minutes
 make test      # now also runs the checks on your real data
 make testset   # checks every gold ID and key fact against the rule text
+make search Q="How long do I have to cancel a new savings account?"
+make search-dev    # score the search methods on dev; choose the re-ranking depth
+make search-test   # score them on test, once
 ```
+
+`make setup` also installs PyTorch for the CPU and sentence-transformers. The
+first search downloads the two models (about 220 MB) and embeds the
+provisions once (about a minute and a half).
 
 ## Layout
 
 ```
 rulecite/   the package: ids.py (provision IDs), records.py, ingest.py (PDF parser),
             testset.py (the test set and its checks),
-            review.py (a tool for reviewing the questions by hand)
+            review.py (a tool for reviewing the questions by hand),
+            search.py (the four search methods), metrics.py, evaluate.py
 testset/    questions.jsonl, the 150 test questions
+results/    search results on dev and test: tables (.md) and every question's ranks (.json)
 tests/      tests; conftest.py builds a synthetic PDF in the Handbook layout
 data/       how to get the PDFs, and the snapshot the results were made with
 docs/       design and results
@@ -96,5 +135,6 @@ docs/       design and results
 
 The Handbook is © the Financial Conduct Authority. Its PDFs are not included
 here: each user downloads their own copy, and nothing derived from them is
-committed except the short key phrases in the test set. This project is a study of question answering over regulation. It
-is not legal or compliance advice.
+committed except the short key phrases in the test set. This project is a
+study of question answering over regulation. It is not legal or compliance
+advice.

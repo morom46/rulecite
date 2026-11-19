@@ -79,3 +79,18 @@ def test_unanswerable_topics_are_absent(rules):
     text = " ".join(r.text.lower() for r in rules.values())
     for phrase in ("payday", "loan-to-income", "liquidity coverage", "national crime agency"):
         assert phrase not in text
+
+
+def test_keyword_search_finds_most_answers(rules):
+    """BM25 alone should have the gold provision in its top 20 for most questions."""
+    from rulecite.metrics import gold_rank, recall_at
+    from rulecite.search import Searcher
+    from rulecite.testset import load_questions
+
+    questions = [q for q in load_questions(PROCESSED.parents[1] / "testset" / "questions.jsonl")
+                 if q.gold]
+    searcher = Searcher(list(rules.values()))
+    ids = [r.id for r in searcher.rules]
+    ranks = [gold_rank([ids[i] for i in res.bm25], q.gold, q.category)
+             for q, res in zip(questions, searcher.run([q.question for q in questions]))]
+    assert recall_at(ranks, 20) >= 0.8
