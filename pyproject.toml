@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 dependencies = ["pymupdf>=2.1", "numpy>=2", "snowballstemmer>=3"]
 
 [project.optional-dependencies]
-models = ["sentence-transformers>=6"]
+models = ["sentence-transformers>=6", "streamlit>=1.50"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -18,4 +18,4 @@ packages = ["rulecite"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "rulecite"]
-addopts = "--doctest-modules -q"
+addopts = "--doctest-modules -q --ignore=rulecite/app.py"
