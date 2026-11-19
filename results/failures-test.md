@@ -1,6 +1,6 @@
 # Why answers go wrong: test
 
-43 of 100 test questions were not right at the refusal threshold 0.03. Each is put in the first kind that fits, in this order. Search ranks are from `rerank@50`.
+41 of 100 test questions were not right at the refusal threshold 0.03. Each is put in the first kind that fits, in this order. Search ranks are from `rerank@50`.
 
 | kind of failure | questions |
 |---|---|
@@ -10,9 +10,9 @@
 | Right provision found by search (top 20), but not in the top two | 16 |
 | Right provision second, but its score was below the threshold | 0 |
 | Multi question: one of the needed provisions not quoted | 7 |
-| Right provision quoted, but the wrong piece of it | 12 |
+| Right provision quoted, but the wrong piece of it | 10 |
 
-Of the 12 wrong-piece failures, 12 would be correct if the whole provision were quoted.
+Of the 10 wrong-piece failures, 10 would be correct if the whole provision were quoted.
 
 Also: 5 answers counted as correct put another provision's quote first, so the right quote is second.
 
@@ -72,7 +72,7 @@ Also: 5 answers counted as correct put another provision's quote first, so the r
 | q126 | multi | A firm finds it has harmed customers and one of them has complained. What must it do, and… | PRIN 2A.2.5, PRIN 2A.10.2 | DISP 1.3.6 (4.8), PRIN 2A.2.5 (4.6) | 4 |
 | q127 | multi | What does fair value mean under the Consumer Duty, and when must a manufacturer first ass… | PRIN 2A.4.1, PRIN 2A.4.3 | PRIN 2A.4.19 (6.6), PRIN 2A.4.5 (6.6) | 19 |
 
-## Right provision quoted, but the wrong piece of it (12)
+## Right provision quoted, but the wrong piece of it (10)
 
 | id | kind | question | gold | quoted (score) | search rank |
 |---|---|---|---|---|---|
@@ -81,9 +81,7 @@ Also: 5 answers counted as correct put another provision's quote first, so the r
 | q016 | number | If a firm has not replied to an ordinary complaint, after how long can the ombudsman cons… | DISP 2.8.1 | DISP 2.8.1 (5.5), DISP 2.8.2 (5.5) | 1 |
 | q028 | fact | If a firm cannot give a final response within eight weeks, what must its written response… | DISP 1.6.2 | DISP 1.6.2 (4.5), DISP 2.8.1 (1.6) | 1 |
 | q055 | multi | If a firm misses the eight-week deadline for a final response, when can the customer go t… | DISP 2.8.1, DISP 1.6.2 | DISP 1.6.2 (2.4), DISP 2.8.1 (1.8) | 2 |
-| q056 | multi | What is the ombudsman's maximum money award for something that happened after April 2019,… | DISP 3.7.4, DISP 3.7.5 | DISP 3.7.4 (6.9), DISP 3.7.5 (2.8) | 2 |
 | q058 | scope | Does any letter from the firm start the six-month time limit for going to the ombudsman? | DISP 2.8.3 | DISP 1 Annex 3 (5.1), DISP 2.8.3 (4.9) | 2 |
-| q086 | fact | What must a bank's general overdraft information explain about what an overdraft is? | BCOBS 4.4.3, BCOBS 2.2B.2 | BCOBS 2.2B.2 (6.1), BCOBS 4.4.3 (5.4) | 1 |
 | q093 | fact | Which overdraft alerts must personal current account customers be enrolled to receive? | BCOBS 8.4.3 | BCOBS 8.4.3 (7.3), BCOBS 8.4.4 (5.0) | 1 |
 | q109 | fact | Does the Consumer Duty create a fiduciary relationship between a firm and its customers? | PRIN 2A.1.11 | PRIN 2A.1.11 (9.1), PRIN 2A.1.13 (4.3) | 1 |
 | q116 | fact | How must manufacturers test their products under the Consumer Duty? | PRIN 2A.3.9 | PRIN 2A.3.9 (9.3), PRIN 2A.3.7 (7.5) | 1 |
