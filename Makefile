@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: help setup ingest test testset review search search-dev search-test ask answer-dev answer-test clean
+.PHONY: help setup ingest test testset review search search-dev search-test ask answer-dev answer-test failures demo clean
 
 help:
 	@echo "make setup    create .venv and install the pinned packages (with PyTorch for the CPU)"
@@ -14,6 +14,8 @@ help:
 	@echo "make ask Q=\"...\"      answer one question by quoting the rules, or refuse"
 	@echo "make answer-dev   score the answers on dev and choose the refusal threshold"
 	@echo "make answer-test  score them on test, with the threshold chosen on dev"
+	@echo "make failures     sort the test failures into kinds (results/failures-test.md)"
+	@echo "make demo         the web page, at http://localhost:8501"
 	@echo "make clean    remove data/processed and caches"
 
 setup:
@@ -55,6 +57,12 @@ answer-dev: data/processed/rules.jsonl
 
 answer-test: data/processed/rules.jsonl
 	$(PY) -m rulecite.answer_eval --split test
+
+failures: data/processed/rules.jsonl
+	$(PY) -m rulecite.failures
+
+demo: data/processed/rules.jsonl
+	$(PY) -m streamlit run rulecite/app.py --server.headless true --browser.gatherUsageStats false
 
 clean:
 	rm -rf data/processed .pytest_cache
