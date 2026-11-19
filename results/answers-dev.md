@@ -1,6 +1,6 @@
 # Answer results: dev
 
-50 dev questions (43 answerable, 7 unanswerable). Made by `python -m rulecite.answer_eval --split dev` on 19 November 2026 with `BAAI/bge-small-en-v1.5` and `cross-encoder/ms-marco-MiniLM-L6-v2`, on the CPU, in 173 s. Refusal threshold 0.03 (chosen on these questions).
+50 dev questions (43 answerable, 7 unanswerable). Made by `python -m rulecite.answer_eval --split dev` on 19 November 2026 with `BAAI/bge-small-en-v1.5` and `cross-encoder/ms-marco-MiniLM-L6-v2`, on the CPU, in 154 s. Refusal threshold 0.03 (chosen on these questions).
 
 An answer is **correct** when it contains every key fact of the question. A question is **right** when its answer is correct, or when it is unanswerable and the system refused.
 
@@ -13,7 +13,7 @@ An answer is **correct** when it contains every key fact of the question. A ques
 | unanswerable, rightly refused | 7 | 0 | 7 |
 | unanswerable but answered | 0 | 7 | 0 |
 | correct among answered (%) | 67 | 58 | 83 |
-| median words in an answer | 78 | 103 | 182 |
+| median words in an answer | 87 | 100 | 182 |
 
 *No refusing* answers every question with the same quotes. *Whole provisions* quotes each provision in full instead of its best piece: an upper limit on what picking the piece can reach, at the cost of much longer answers.
 

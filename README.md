@@ -15,6 +15,38 @@ The system covers three sourcebooks of the FCA Handbook:
 
 Everything runs on a laptop CPU, with no paid API and no account.
 
+## Results in brief
+
+On 100 held-out test questions (87 answerable, 13 about rules these books do
+not contain):
+
+* **Search** puts the right provision in its top 5 for 87% of answerable
+  questions (keyword search alone: 76%; exact McNemar p = 0.03), and in its
+  top 20 for 97%.
+* **Answers** are right for **59%** of all questions (95% interval 49–69%):
+  50 of 87 answerable questions get a quote containing every key fact, and 9
+  of 13 unanswerable ones are refused. Answering everything instead would get
+  51%.
+* **Failures** are mostly about *which* provision and sentence to quote, not
+  about finding it or deciding whether to answer: of the 41 failures, 16 had
+  the right provision ranked third to seventeenth and 10 quoted the wrong
+  sentence of the right one ([docs/failures.md](docs/failures.md)).
+
+Every setting was chosen on 50 separate dev questions; the test questions
+were used only to report.
+
+```mermaid
+flowchart LR
+    Q[question] --> B[BM25 keyword search]
+    Q --> D[dense search, bge-small]
+    B --> F[reciprocal rank fusion]
+    D --> F
+    F --> R[cross-encoder re-ranks top 50]
+    R --> T{best score above threshold?}
+    T -- no --> X[refuse]
+    T -- yes --> P[quote the best sentence or list from the top two, with citations]
+```
+
 ## Status
 
 | # | Milestone | Status |
@@ -24,7 +56,7 @@ Everything runs on a laptop CPU, with no paid API and no account.
 | 3 | Search: keyword, meaning-based, both combined, and re-ranking | done |
 | 4 | Answers that quote the rule with its citation, and refuse when unsure | done |
 | 5 | Comparison with a small local language model that writes its own answers | skipped |
-| 6 | Failure analysis and a demo page | planned |
+| 6 | Failure analysis and a demo page | done |
 
 ## Milestone 1: the rules as data
 
@@ -104,22 +136,53 @@ was chosen on dev; the test questions were run once. See
 make ask Q="What is the maximum award the ombudsman can make?"
 ```
 
-Results on the 100 test questions:
+Results on the 100 test questions, after the list fix described in
+milestone 6 (the first run, in brackets, is in the git history):
 
 | | the system | never refusing | quoting whole provisions |
 |---|---|---|---|
-| right (correct answer, or rightly refused) | **57%** (47–67) | 49% | 69% |
-| correct answers, of 87 answerable | 48 | 49 | 60 |
-| wrong answers | 37 | 38 | 25 |
-| unanswerable questions refused, of 13 | 9 | 0 | 9 |
-| answerable questions refused | 2 | 0 | 2 |
-| median words in an answer | 79 | 84 | 158 |
+| right (correct answer, or rightly refused) | **59%** (57) | 51% | 69% |
+| correct answers, of 87 answerable | 50 (48) | 51 | 60 |
+| wrong answers | 35 (37) | 36 | 25 |
+| unanswerable questions refused, of 13 | 9 (9) | 0 | 9 |
+| answerable questions refused | 2 (2) | 0 | 2 |
+| median words in an answer | 88 (79) | 92 | 158 |
 
 Refusing gets 9 more questions right than answering everything and 1 fewer
 (exact McNemar p = 0.02). The main weakness is choosing what to quote:
-quoting whole provisions instead of the best piece would turn 12 wrong answers
-into correct ones, at twice the length, and questions that need two
-provisions are mostly wrong (2 of 11).
+quoting whole provisions instead of the best piece would turn 10 wrong answers
+into correct ones, at nearly twice the length, and questions that need two
+provisions are mostly wrong (3 of 11 right).
+
+## Milestone 6: failures and a demo
+
+`make failures` sorts each of the 41 test questions that were not right into
+one kind; [docs/failures.md](docs/failures.md) goes through them with
+examples.
+
+| kind of failure | test questions |
+|---|---|
+| Right provision found by search, but not in the top two | 16 |
+| Right provision quoted, but the wrong piece of it | 10 |
+| Multi question: one of the needed provisions not quoted | 7 |
+| Answered a question these books do not cover | 4 |
+| Refused a question that has an answer | 2 |
+| Right provision not in the top 20 of search | 2 |
+
+Two patterns explain most of them. A *neighbouring* provision, from the same
+section and with almost the same words, is ranked above the right one
+(*"How long must a bank keep records of cancellations?"* gets the 30-day
+repayment rules next door). And *specialised* text beats the general rule:
+the appendix on payment protection insurance complaints, or the rules for
+MiFID complaints, are quoted for general questions about complaints. The
+document ends with what would fix each kind and what it would cost.
+
+`make demo` opens a web page (Streamlit) for asking questions, with the
+quotes, their citations and scores, and a slider for the refusal threshold.
+Trying it found a bug: lists such as *"is: 1. (a) £350,000…"* were cut after
+the *"1."*, which affected 95 provisions. It was fixed, dev was run again
+(threshold and dev accuracy unchanged) and then test, which is where the 57%
+became 59%.
 
 ## Quick start
 
@@ -143,6 +206,8 @@ make search-test   # score them on test, once
 make ask Q="How long do I have to cancel a new savings account?"
 make answer-dev    # score the answers on dev; choose the refusal threshold
 make answer-test   # score them on test, once
+make failures      # sort the test failures into kinds
+make demo          # the web page, at http://localhost:8501
 ```
 
 `make setup` also installs PyTorch for the CPU and sentence-transformers. The
@@ -156,9 +221,10 @@ rulecite/   the package: ids.py (provision IDs), records.py, ingest.py (PDF pars
             testset.py (the test set and its checks),
             review.py (a tool for reviewing the questions by hand),
             search.py (the four search methods), metrics.py, evaluate.py,
-            answer.py (quoting or refusing), answer_eval.py
+            answer.py (quoting or refusing), answer_eval.py,
+            failures.py (sorting the failures), app.py (the demo page)
 testset/    questions.jsonl, the 150 test questions
-results/    search and answer results on dev and test: tables (.md) and every question (.json)
+results/    search, answer and failure results: tables (.md) and every question (.json)
 tests/      tests; conftest.py builds a synthetic PDF in the Handbook layout
 data/       how to get the PDFs, and the snapshot the results were made with
 docs/       design and results
@@ -171,3 +237,14 @@ here: each user downloads their own copy, and nothing derived from them is
 committed except the short key phrases in the test set. This project is a
 study of question answering over regulation. It is not legal or compliance
 advice.
+
+## What I would do next
+
+In order of how many test failures each could fix, from
+[docs/failures.md](docs/failures.md): quote the top three provisions, or the
+top two plus any close behind; quote short provisions whole; rank specialised
+parts (DISP App, DISP 1.1A) lower unless the question names their subject;
+and expand questions with the Handbook Glossary, so that *"who can bring a
+complaint"* finds *"eligible complainant"*. Each would be tuned on dev and
+checked on a fresh set of test questions, since these 100 have now been
+studied closely.
