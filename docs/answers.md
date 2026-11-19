@@ -61,23 +61,32 @@ Full tables: [results/answers-dev.md](../results/answers-dev.md) and
 [results/answers-test.md](../results/answers-test.md); every question's
 outcome and quotes are in the `.json` files beside them.
 
+**A second run.** The first test run (in milestone 4) scored 57%. Trying
+the demo page in milestone 6 showed a bug: some lists in the PDFs carry an
+extra running number (*"is: 1. (a) £350,000…"*), which was read as the end of
+a sentence, so the ombudsman's award limits were quoted as *"…may make is:
+1."*. It affected 95 provisions. After fixing it, dev was run again (the
+threshold came out the same, 0.03, and dev accuracy the same, 70%) and then
+test. The numbers below are from that second run, with the first in
+brackets. The first run's files are in the git history.
+
 **Test, 100 questions (87 answerable, 13 unanswerable), threshold 0.03:**
 
 | | the system | never refusing | quoting whole provisions |
 |---|---|---|---|
-| accuracy (right / all) | **57%** | 49% | 69% |
-| correct answers | 48 | 49 | 60 |
-| wrong answers | 37 | 38 | 25 |
-| answerable but refused | 2 | 0 | 2 |
-| unanswerable, rightly refused | 9 of 13 | 0 of 13 | 9 of 13 |
-| correct among answered | 54% | 49% | 67% |
-| median words in an answer | 79 | 84 | 158 |
+| accuracy (right / all) | **59%** (57) | 51% (49) | 69% (69) |
+| correct answers | 50 (48) | 51 (49) | 60 (60) |
+| wrong answers | 35 (37) | 36 (38) | 25 (25) |
+| answerable but refused | 2 (2) | 0 | 2 |
+| unanswerable, rightly refused | 9 of 13 (9) | 0 of 13 | 9 of 13 |
+| correct among answered | 56% (54) | 51% (49) | 67% (67) |
+| median words in an answer | 88 (79) | 92 (84) | 158 (158) |
 
-The 95% bootstrap interval for accuracy is 47% to 67%.
+The 95% bootstrap interval for accuracy is 49% to 69%.
 
 | right, by kind of question | fact (49) | number (15) | scope (12) | multi (11) | unanswerable (13) |
 |---|---|---|---|---|---|
-| % | 61 | 67 | 50 | 18 | 69 |
+| % | 63 | 67 | 50 | 27 | 69 |
 
 ### What the results show
 
@@ -86,39 +95,39 @@ The 95% bootstrap interval for accuracy is 47% to 67%.
   answering everything, it gets 9 more questions right and 1 fewer (exact
   McNemar p = 0.021).
 * **The threshold held up on new questions.** Over the test thresholds the
-  best accuracy is 58% (at 2.0), against 57% at the threshold chosen on dev.
+  best accuracy is 60% (at 2.0), against 59% at the threshold chosen on dev.
   Raising it further refuses answerable questions faster than it saves wrong
   answers: at 6.0 it answers less than half the questions.
-* **Most errors are wrong quotes, not wrong refusals.** 37 of the 87
+* **Most errors are wrong quotes, not wrong refusals.** 35 of the 87
   answerable test questions get an answer that misses a key fact. They come
   from two places:
   * *the right provision is not in the top two.* Search puts it first for 59%
     of test questions and in the top three for 79% (milestone 3), and only
     the top two are quoted;
   * *the right provision, the wrong piece.* Quoting whole provisions instead
-    of the best piece turns 12 of those wrong answers into correct ones (48
-    to 60 correct), at twice the length. The cross-encoder was trained to
+    of the best piece turns 10 of those wrong answers into correct ones (50
+    to 60 correct), at nearly twice the length. The cross-encoder was trained to
     match questions to passages, and it does worse at choosing between
     sentences of one provision. For example, for *"How long do I have to
     cancel a new savings account?"* it picks, from BCOBS 6.4.2R, the sentence
     *"This period begins from the day on which…"*, which says nothing on its
     own.
-* **Questions that need two provisions mostly fail** (2 of 11 right): both
+* **Questions that need two provisions mostly fail** (3 of 11 right): both
   provisions have to be in the top two and both pieces have to be right.
-* **Dev was easier than test.** Accuracy was 70% on dev and 57% on test, and
+* **Dev was easier than test.** Accuracy was 70% on dev and 59% on test, and
   all 7 unanswerable dev questions were refused against 9 of 13 on test. With
   50 dev questions, a gap like this is within what chance can produce, and it
   is why the reported numbers come from test.
 
-**Speed.** 3.8 seconds a question on the CPU (378 s for 100), most of it the
+**Speed.** About 3 seconds a question on the CPU (312 s for 100), most of it the
 cross-encoder reading 50 provisions and then the pieces of the top two.
 
 ## Limits
 
 * **"Contains the key facts" is not "a good answer".** An answer can contain
   them inside a second, longer quote after a misleading first one, and still
-  count as correct; a reader would be confused. Milestone 6 looks at such
-  answers by hand.
+  count as correct; a reader would be confused. [failures.md](failures.md) counts such
+  answers (5 on test).
 * **Refusing is decided on the best score alone**, one number from a model
   that was not trained on regulation. Four unanswerable test questions still
   got an answer.
