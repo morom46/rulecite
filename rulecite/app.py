@@ -4,8 +4,8 @@
 
 It runs on your own machine with the same models and threshold as the
 evaluation. The models' and rules' locations can be changed with the
-RULECITE_RULES, RULECITE_DENSE_MODEL, RULECITE_RERANKER and RULECITE_CACHE
-environment variables (the tests use these to run it with tiny models).
+RULECITE_RULES, RULECITE_DENSE_MODEL, RULECITE_RERANKER, RULECITE_CACHE and
+RULECITE_RESULTS environment variables (the tests use these to run it with tiny models).
 """
 
 import os
@@ -14,17 +14,17 @@ from pathlib import Path
 import streamlit as st
 
 from rulecite.answer import Answerer, Draft, decide, saved_depth, saved_threshold
+from rulecite.answer_eval import demo_examples
 from rulecite.records import load_rules
 from rulecite.search import CACHE, DENSE_MODEL, RERANKER, Searcher, load_models
 from rulecite.testset import RULES
 
-EXAMPLES = [
-    "How long does a firm have to send a final response to a complaint?",
-    "How long do I have to cancel a new savings account?",
-    "What is the most I can lose if my card is stolen and used?",
+FALLBACK_EXAMPLES = [
+    "What is the maximum award the ombudsman can make?",
     "What does the Consumer Duty mean by acting in good faith?",
     "What is the daily cap on interest for payday loans?",
 ]
+RESULTS = Path(os.environ.get("RULECITE_RESULTS", "results"))
 
 
 @st.cache_resource(show_spinner="Loading the rules and the two models ...")
@@ -61,7 +61,7 @@ rules, answerer = load()
 with st.sidebar:
     st.header("Settings")
     chosen = saved_threshold()
-    threshold = st.slider("Refusal threshold", -8.0, 8.0, float(round(chosen, 2)), 0.25,
+    threshold = st.slider("Refusal threshold", -8.0, 8.0, float(round(chosen, 2)), 0.01,
                           help="Refuse when the best re-ranker score is below this. "
                                f"{chosen:.2f} was chosen on the dev questions.")
     show_all = st.toggle("Show what it considered", value=False)
@@ -71,8 +71,19 @@ with st.sidebar:
 
 st.text_input("Your question", key="question",
               placeholder="e.g. How long does a firm have to answer a complaint?")
-st.caption("Or try one:")
-for i, example in enumerate(EXAMPLES):
+answered, refused, accuracy = demo_examples(RESULTS)
+if answered:
+    examples = answered + refused
+    note = (" The last one is about rules outside these books, so it should be refused."
+            if refused else "")
+    st.caption(f"Or try one. These are questions from the test set that it gets right.{note} "
+               f"Overall it gets {accuracy:.0%} of the test questions right, so expect "
+               "mistakes on your own questions." if accuracy is not None else
+               "Or try one of these questions that it gets right:")
+else:
+    examples = FALLBACK_EXAMPLES
+    st.caption("Or try one:")
+for i, example in enumerate(examples):
     st.button(example, key=f"example{i}", on_click=use_example, args=(example,))
 
 question = st.session_state.get("question", "").strip()

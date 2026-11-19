@@ -28,7 +28,8 @@ def env(tmp_path_factory):
              for i, t in enumerate(TEXTS, 1)]
     save_rules(rules, folder / "rules.jsonl")
     return {"RULECITE_RULES": str(folder / "rules.jsonl"), "RULECITE_DENSE_MODEL": encoder,
-            "RULECITE_RERANKER": cross, "RULECITE_CACHE": str(folder / "cache")}
+            "RULECITE_RERANKER": cross, "RULECITE_CACHE": str(folder / "cache"),
+            "RULECITE_RESULTS": str(folder / "no-results")}
 
 
 @pytest.fixture
@@ -43,7 +44,7 @@ def app(env, monkeypatch):
 
 def test_page_loads_with_examples(app):
     assert app.title[0].value == "rulecite"
-    assert len(app.button) == 5
+    assert len(app.button) == 3  # the fallback examples, as there are no results here
 
 
 def test_answer_with_a_low_threshold(app):
@@ -55,7 +56,7 @@ def test_answer_with_a_low_threshold(app):
 
 def test_refuses_with_a_high_threshold(app):
     app.sidebar.slider[0].set_value(8.0).run()
-    app.button[4].click().run()
+    app.button[2].click().run()
     assert not app.exception
     assert "clearly answers" in app.warning[0].value
 
