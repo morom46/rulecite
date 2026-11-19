@@ -22,8 +22,8 @@ Everything runs on a laptop CPU, with no paid API and no account.
 | 1 | Parse the three sourcebooks into one record per provision | done |
 | 2 | A test set of 150 questions, each with the rules that answer it and the facts a right answer must contain | done |
 | 3 | Search: keyword, meaning-based, both combined, and re-ranking | done |
-| 4 | Answers that quote the rule with its citation, and refuse when unsure | planned |
-| 5 | Comparison with a small local language model that writes its own answers | planned |
+| 4 | Answers that quote the rule with its citation, and refuse when unsure | done |
+| 5 | Comparison with a small local language model that writes its own answers | skipped |
 | 6 | Failure analysis and a demo page | planned |
 
 ## Milestone 1: the rules as data
@@ -92,6 +92,35 @@ The re-ranker's score also separates the two kinds of question: the median
 score of its first result is 6.0 for answerable test questions and −1.9 for
 unanswerable ones. Milestone 4 uses that to decide when to refuse.
 
+## Milestone 4: answers
+
+An answer quotes, from each of the top two re-ranked provisions, the sentence
+or short list that best answers the question, with its citation. If the best
+re-ranker score is below a threshold, it refuses instead. The threshold (0.03)
+was chosen on dev; the test questions were run once. See
+[docs/answers.md](docs/answers.md).
+
+```
+make ask Q="What is the maximum award the ombudsman can make?"
+```
+
+Results on the 100 test questions:
+
+| | the system | never refusing | quoting whole provisions |
+|---|---|---|---|
+| right (correct answer, or rightly refused) | **57%** (47–67) | 49% | 69% |
+| correct answers, of 87 answerable | 48 | 49 | 60 |
+| wrong answers | 37 | 38 | 25 |
+| unanswerable questions refused, of 13 | 9 | 0 | 9 |
+| answerable questions refused | 2 | 0 | 2 |
+| median words in an answer | 79 | 84 | 158 |
+
+Refusing gets 9 more questions right than answering everything and 1 fewer
+(exact McNemar p = 0.02). The main weakness is choosing what to quote:
+quoting whole provisions instead of the best piece would turn 12 wrong answers
+into correct ones, at twice the length, and questions that need two
+provisions are mostly wrong (2 of 11).
+
 ## Quick start
 
 Needs Python 3.11 or newer.
@@ -111,6 +140,9 @@ make testset   # checks every gold ID and key fact against the rule text
 make search Q="How long do I have to cancel a new savings account?"
 make search-dev    # score the search methods on dev; choose the re-ranking depth
 make search-test   # score them on test, once
+make ask Q="How long do I have to cancel a new savings account?"
+make answer-dev    # score the answers on dev; choose the refusal threshold
+make answer-test   # score them on test, once
 ```
 
 `make setup` also installs PyTorch for the CPU and sentence-transformers. The
@@ -123,9 +155,10 @@ provisions once (about a minute and a half).
 rulecite/   the package: ids.py (provision IDs), records.py, ingest.py (PDF parser),
             testset.py (the test set and its checks),
             review.py (a tool for reviewing the questions by hand),
-            search.py (the four search methods), metrics.py, evaluate.py
+            search.py (the four search methods), metrics.py, evaluate.py,
+            answer.py (quoting or refusing), answer_eval.py
 testset/    questions.jsonl, the 150 test questions
-results/    search results on dev and test: tables (.md) and every question's ranks (.json)
+results/    search and answer results on dev and test: tables (.md) and every question (.json)
 tests/      tests; conftest.py builds a synthetic PDF in the Handbook layout
 data/       how to get the PDFs, and the snapshot the results were made with
 docs/       design and results
