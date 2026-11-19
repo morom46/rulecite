@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: help setup ingest test testset review search search-dev search-test clean
+.PHONY: help setup ingest test testset review search search-dev search-test ask answer-dev answer-test clean
 
 help:
 	@echo "make setup    create .venv and install the pinned packages (with PyTorch for the CPU)"
@@ -11,6 +11,9 @@ help:
 	@echo "make search Q=\"...\"   search the rules for one question"
 	@echo "make search-dev   score the search methods on dev and choose the re-ranking depth"
 	@echo "make search-test  score them on test, with the depth chosen on dev"
+	@echo "make ask Q=\"...\"      answer one question by quoting the rules, or refuse"
+	@echo "make answer-dev   score the answers on dev and choose the refusal threshold"
+	@echo "make answer-test  score them on test, with the threshold chosen on dev"
 	@echo "make clean    remove data/processed and caches"
 
 setup:
@@ -43,6 +46,15 @@ search-dev: data/processed/rules.jsonl
 
 search-test: data/processed/rules.jsonl
 	$(PY) -m rulecite.evaluate --split test
+
+ask: data/processed/rules.jsonl
+	$(PY) -m rulecite.answer "$(Q)"
+
+answer-dev: data/processed/rules.jsonl
+	$(PY) -m rulecite.answer_eval --split dev
+
+answer-test: data/processed/rules.jsonl
+	$(PY) -m rulecite.answer_eval --split test
 
 clean:
 	rm -rf data/processed .pytest_cache
