@@ -189,6 +189,40 @@ def write_json(path: Path, questions: list[Question], drafts: list[Draft], thres
     path.write_text("\n".join(lines) + "\n")
 
 
+def demo_examples(results: Path = RESULTS, questions: Path = QUESTIONS,
+                  n: int = 4) -> tuple[list[str], list[str], float | None]:
+    """Questions for the demo page: some it answered right, one it rightly refused.
+
+    Taken from the saved results, so the examples show what the system really
+    does: n answerable questions whose first quote is from a gold provision (one
+    per book first), then one unanswerable question it refused. Also returns
+    the test accuracy, which the page shows beside them. Returns (answered,
+    refused, accuracy).
+    """
+    by_id = {q.id: q for q in load_questions(questions)} if questions.exists() else {}
+    good, refused, accuracy = [], [], None
+    for split in ("test", "dev"):
+        path = results / f"answers-{split}.json"
+        if not path.exists():
+            continue
+        data = json.loads(path.read_text())
+        if split == "test":
+            accuracy = data["summary"]["accuracy"]
+        for a in data["questions"]:
+            q = by_id.get(a["id"])
+            if q is None:
+                continue
+            if a["outcome"] == "correct" and a["quotes"] and a["quotes"][0]["id"] in q.gold:
+                good.append(q)
+            elif q.category == "unanswerable" and a["outcome"] == "refused":
+                refused.append(q)
+    picked: list[Question] = []
+    for book in ("DISP", "BCOBS", "PRIN"):
+        picked += [q for q in good if q.book == book][:1]
+    picked += [q for q in good if q not in picked][:max(0, n - len(picked))]
+    return [q.question for q in picked[:n]], [q.question for q in refused[:1]], accuracy
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--split", choices=("dev", "test"), required=True)

@@ -188,3 +188,24 @@ def test_dev_then_test(files, tmp_path, capsys):
     data = json.loads((out / "answers-test.json").read_text())
     assert data["threshold"] == choice["threshold"]
     assert [r["id"] for r in data["questions"]] == ["q004", "q005"]
+
+
+def test_demo_examples_come_from_the_results(tmp_path):
+    qs = tmp_path / "qs.jsonl"
+    questions = [q(1, "fact", ["DISP 1.6.2"]), q(2, "fact", ["BCOBS 6.1.1"]),
+                 q(3, "fact", ["PRIN 2A.2.1"]), q(4, "unanswerable"), q(5, "fact", ["DISP 1.9.1"])]
+    for i, x in enumerate(questions, 1):
+        x.question = f"Question {i}?"
+    save_questions(questions, qs)
+    rows = [("q001", "correct", "DISP 1.6.2"), ("q002", "correct", "BCOBS 9.9.9"),
+            ("q003", "correct", "PRIN 2A.2.1"), ("q004", "refused", "DISP 1.1.1"),
+            ("q005", "wrong", "DISP 1.9.1")]
+    (tmp_path / "answers-test.json").write_text(json.dumps({
+        "summary": {"accuracy": 0.6},
+        "questions": [{"id": i, "outcome": o, "quotes": [{"id": g, "score": 1, "text": ""}]}
+                      for i, o, g in rows]}))
+    answered, refused, acc = ae.demo_examples(tmp_path, qs)
+    # q002's first quote is not its gold, and q005 was wrong, so neither is shown.
+    assert answered == ["Question 1?", "Question 3?"] and refused == ["Question 4?"]
+    assert acc == 0.6
+    assert ae.demo_examples(tmp_path / "none", qs) == ([], [], None)

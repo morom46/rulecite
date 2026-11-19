@@ -41,6 +41,11 @@ GAP = " … "
 
 _NOTE = re.compile(r"^\[?Note:", re.IGNORECASE)
 _SENTENCE_END = re.compile(r"(?<=[.;])\s+(?=[A-Z(])")
+# Some lists in the PDFs carry an extra running number before the real marker,
+# as in "is: 1. (a) £350,000 ...; and 2. (b) £160,000". The number is dropped,
+# or the "1." would be read as the end of a sentence.
+_STRAY_NUMBER = re.compile(r"(^|\s)\d{1,2}\.\s+(?=\()")
+_MARKER = re.compile(r"^\((\d+[A-Z]*|[a-z]{1,2}|[ivx]+)\)")
 
 
 def units(text: str) -> list[str]:
@@ -52,13 +57,17 @@ def units(text: str) -> list[str]:
 
     >>> units("The firm must:\\n(1) refund; and\\n(2) tell the customer. It must act fast.\\n[Note: x]")
     ['The firm must:', '(1) refund; and', '(2) tell the customer.', 'It must act fast.']
+    >>> units("(1) The award is: 1. (a) £350,000; and\\n2. (b) £160,000.")
+    ['(1) The award is:', '(a) £350,000; and', '(b) £160,000.']
     """
     out: list[str] = []
     for line in text.split("\n"):
         line = line.strip()
         if not line or _NOTE.match(line):
             continue
-        for piece in _SENTENCE_END.split(line):
+        line = _STRAY_NUMBER.sub(r"\1", line).strip()
+        line = re.sub(r":\s+(?=\()", ":\n", line)  # a list item after a lead-in starts a piece
+        for piece in [p for part in line.split("\n") for p in _SENTENCE_END.split(part)]:
             piece = piece.strip()
             if out and len(piece.split()) < 3 and not piece.startswith("("):
                 out[-1] += " " + piece
@@ -75,6 +84,21 @@ def is_item(piece: str) -> bool:
     return piece.startswith("(") or piece[:1].islower() or bool(re.match(r"\d+\. ", piece))
 
 
+def marker_kind(piece: str) -> str | None:
+    """The kind of list marker a piece starts with: number, letter or roman.
+
+    >>> [marker_kind(p) for p in ["(2) x", "(1A) x", "(b) x", "(iv) x", "Text"]]
+    ['number', 'number', 'letter', 'roman', None]
+    """
+    m = _MARKER.match(piece)
+    if not m:
+        return None
+    label = m.group(1)
+    if label[0].isdigit():
+        return "number"
+    return "roman" if re.fullmatch(r"[ivx]+", label) else "letter"
+
+
 def lead_in(pieces: list[str], i: int) -> int | None:
     """The piece that introduces list item i (the nearest one before it ending in ':').
 
@@ -82,11 +106,15 @@ def lead_in(pieces: list[str], i: int) -> int | None:
     0
     >>> lead_in(["A firm must act.", "It must be fair."], 1) is None
     True
+    >>> lead_in(["It does not apply to:", "(1) x;", "(2) y which:", "(a) z;", "(3) w."], 4)
+    0
     """
     if not is_item(pieces[i]):
         return None
+    kind = marker_kind(pieces[i])
     for j in range(i - 1, -1, -1):
-        if pieces[j].rstrip().endswith(":"):
+        # A lead-in at the item's own level is a sibling with its own sub-list, not ours.
+        if pieces[j].rstrip().endswith(":") and (kind is None or marker_kind(pieces[j]) != kind):
             return j
     return None
 
@@ -106,8 +134,11 @@ def quote_around(pieces: list[str], i: int) -> str:
     lead = i if pieces[i].rstrip().endswith(":") else lead_in(pieces, i)
     if lead is None:
         return pieces[i]
+    level = marker_kind(pieces[lead])
     end = lead + 1
     while end < len(pieces) and is_item(pieces[end]):
+        if level and marker_kind(pieces[end]) == level:
+            break  # the next item at the lead-in's own level ends its list
         end += 1
     whole = " ".join(pieces[lead:end])
     if len(whole.split()) <= LIST_WORDS:

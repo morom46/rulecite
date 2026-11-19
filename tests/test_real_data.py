@@ -116,4 +116,4 @@ def test_quotes_can_hold_the_key_facts(rules):
         else:
             reachable += any(all(contains(p, f) for f in q.key_facts)
                              for p in quotes(rules[q.gold[0]]))
-    assert reachable >= len(questions) - 2
+    assert reachable >= len(questions) - 1
